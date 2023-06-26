@@ -7,7 +7,7 @@ import styled from "styled-components";
 import { loginFailure, loginStart, loginSuccess } from "../redux/userSlice";
 import { auth, provider } from "../firebase";
 import { LoginAPI, GoogleSignInAPI, RegisterAPI } from "../api/AuthAPI";
-import { postUserData } from "../api/FirestoreAPI";
+import { getSingleUser, postUserData } from "../api/FirestoreAPI";
 import { async } from "@firebase/util";
 import { useNavigate } from "react-router-dom";
 
@@ -96,8 +96,11 @@ const SignIn = () => {
     e.preventDefault();
     dispatch(loginStart());
     try {
-      LoginAPI(username, password);
-      dispatch(loginSuccess());
+      const res = await LoginAPI(email, password);
+      console.log(res);
+      const data = getSingleUser(res, email);
+      console.log(data);
+      dispatch(loginSuccess(data));
       navigate("/");
     } catch (err) {
       dispatch(loginFailure());
@@ -127,23 +130,14 @@ const SignIn = () => {
 
   const signInWithGoogle = async () => {
     dispatch(loginStart());
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        axios
-          .post("/auth/google", {
-            name: result.user.displayName,
-            email: result.user.email,
-            img: result.user.photoURL,
-          })
-          .then((res) => {
-            console.log(res);
-            dispatch(loginSuccess(res.data));
-            navigate("/");
-          });
-      })
-      .catch((error) => {
-        dispatch(loginFailure());
-      });
+    try {
+      const data = await GoogleSignInAPI();
+      dispatch(loginSuccess(data));
+      navigate("/");
+      console.log(data);
+    } catch (err) {
+      dispatch(loginFailure());
+    }
   };
 
   //TODO: REGISTER FUNCTIONALITY
@@ -151,16 +145,18 @@ const SignIn = () => {
     e.preventDefault();
     dispatch(loginStart());
     try {
-      let res = await RegisterAPI(username, email, password);
-      postUserData({
-        userID: uuid(),
-        name: username,
-        email: email,
+      const res = await RegisterAPI(email, password);
+      res.user.displayName = username;
+      const data = postUserData({
+        uid: res.user.uid,
+        displayName: res.user.displayName,
+        email: res.user.email,
         password: password,
         photoURL: null,
       });
+      console.log(data);
       toast.success("Registration Success!");
-      dispatch(loginSuccess());
+      dispatch(loginSuccess(data));
       navigate("/");
       //localStorage.setItem("userEmail", res.email);
     } catch (err) {
@@ -174,18 +170,15 @@ const SignIn = () => {
       <Wrapper>
         <Title>Sign in</Title>
         <SubTitle>to continue to LamaTube</SubTitle>
-        <Input
-          placeholder="username"
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        <Input placeholder="email" onChange={(e) => setEmail(e.target.value)} />
         <Input
           type="password"
           placeholder="password"
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button onClick={handleLogin}>Sign in</Button>
+        <Button /*onClick={handleLogin}*/><strike>Sign in</strike></Button>
         <Title>or</Title>
-        <Button /*onClick={signInWithGoogle}*/>Signin with Google</Button>
+        <Button onClick={signInWithGoogle}>Signin with Google</Button>
         <Title>or</Title>
         <Input
           placeholder="username"
@@ -197,7 +190,7 @@ const SignIn = () => {
           placeholder="password"
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button onClick={handleRegister}>Sign up</Button>
+        <Button /*onClick={handleRegister}*/><strike>Sign up</strike></Button>
       </Wrapper>
       <More>
         English(USA)

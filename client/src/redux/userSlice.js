@@ -7,22 +7,22 @@ const initialState = {
 };
 
 export const userSlice = createSlice({
-  name: "user",
+  name: "sliceOfUser",
   initialState,
   reducers: {
     loginStart: (state) => {
       state.loading = true;
     },
     loginSuccess: (state, action) => {
-      state.loading = false;
       state.currentUser = action.payload;
+      state.loading = false;
     },
     loginFailure: (state) => {
       state.loading = false;
       state.error = true;
     },
     logout: (state) => {
-      state.currentUser = null;
+      state.currentUser = false;
       state.loading = false;
       state.error = false;
     },
