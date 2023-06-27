@@ -1,4 +1,4 @@
-import axios from "axios";
+//import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
@@ -56,13 +56,13 @@ const Info = styled.div`
 const Card = ({ type, video }) => {
   const [channel, setChannel] = useState({});
 
-  useEffect(() => {
+  /*useEffect(() => {
     const fetchChannel = async () => {
       const res = await axios.get(`/users/find/${video.userId}`);
       setChannel(res.data);
     };
     fetchChannel();
-  }, [video.userId]);
+  }, [video.userId]);*/
 
   return (
     <Link to={`/video/${video._id}`} style={{ textDecoration: "none" }}>

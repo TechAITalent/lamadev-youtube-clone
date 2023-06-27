@@ -14,14 +14,14 @@ import {
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 
-let postsRef = collection(firestore, "posts");
+let videosRef = collection(firestore, "videos");
 let userRef = collection(firestore, "users");
 let likeRef = collection(firestore, "likes");
 let commentsRef = collection(firestore, "comments");
 let connectionRef = collection(firestore, "connections");
 
-export const postStatus = (object) => {
-  addDoc(postsRef, object)
+export const uploadVideo = (object) => {
+  addDoc(videosRef, object)
     .then(() => {
       toast.success("Post has been added successfully");
     })
@@ -30,18 +30,20 @@ export const postStatus = (object) => {
     });
 };
 
-export const getStatus = (setAllStatus) => {
-  const q = query(postsRef, orderBy("timeStamp", "desc"));
+export const getVideo = (setAllStatus) => {
+  const q = query(videosRef, orderBy("desc"));
   onSnapshot(q, (response) => {
     setAllStatus(
       response.docs.map((docs) => {
+        console.log(docs.data());
         return { ...docs.data(), id: docs.id };
+        //return docs.data();
       })
     );
   });
 };
 
-export const getAllUsers = (setAllUsers) => {
+/*export const getAllUsers = (setAllUsers) => {
   onSnapshot(userRef, (response) => {
     setAllUsers(
       response.docs.map((docs) => {
@@ -60,7 +62,7 @@ export const getSingleStatus = (setAllStatus, id) => {
       })
     );
   });
-};
+};*/
 
 export const getSingleUser = (setCurrentUser, email) => {
   const singleUserQuery = query(userRef, where("email", "==", email));
@@ -81,7 +83,7 @@ export const postUserData = (object) => {
     });
 };
 
-export const getCurrentUser = (setCurrentUser) => {
+/*export const getCurrentUser = (setCurrentUser) => {
   onSnapshot(userRef, (response) => {
     setCurrentUser(
       response.docs
@@ -225,4 +227,4 @@ export const getConnections = (userId, targetId, setIsConnected) => {
   } catch (err) {
     console.log(err);
   }
-};
+};*/
