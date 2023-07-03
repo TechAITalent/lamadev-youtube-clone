@@ -11,10 +11,11 @@ import Card from "../components/Card";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 //import axios from "axios";
-import { dislike, fetchSuccess, like } from "../redux/videoSlice";
+import { dislike, fetchStart, fetchSuccess, like } from "../redux/videoSlice";
 import { format } from "timeago.js";
 import { subscription } from "../redux/userSlice";
 import Recommendation from "../components/Recommendation";
+import { getSingleVideo } from "../api/FirestoreAPI";
 
 const Container = styled.div`
   display: flex;
@@ -124,20 +125,35 @@ const Video = () => {
   const path = useLocation().pathname.split("/")[2];
 
   const [channel, setChannel] = useState({});
+  const [video, setVideo] = useState();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        fetchStart();
         /*const videoRes = await axios.get(`/videos/find/${path}`);
         const channelRes = await axios.get(
           `/users/find/${videoRes.data.userId}`
-        );
-        setChannel(channelRes.data);
-        dispatch(fetchSuccess(videoRes.data));*/
+        );*/
+        await getSingleVideo(setVideo, path);
+        //setChannel(channelRes.data);
+        //await console.log(dispatch(fetchSuccess(video)));
       } catch (err) {}
     };
     fetchData();
   }, [path, dispatch]);
+
+  useEffect(() => {
+    try {
+      if (!null)
+      {
+        dispatch(fetchSuccess(video[0]));
+        console.log(currentVideo.createdAt);
+        const channelRes = currentVideo;
+        console.log(channelRes);
+      }
+    } catch (err) {}
+  }, [video, setVideo]);
 
   const handleLike = async () => {
     //await axios.put(`/users/like/${currentVideo._id}`);
@@ -157,6 +173,9 @@ const Video = () => {
 
   //TODO: DELETE VIDEO FUNCTIONALITY
 
+  // CurrentVideo Testing
+  console.log(video, currentVideo);
+
   return (
     <Container>
       <Content>
@@ -166,7 +185,8 @@ const Video = () => {
         <Title>{currentVideo.title}</Title>
         <Details>
           <Info>
-            {currentVideo.views} views • {format(currentVideo.createdAt)}
+            {currentVideo.views} views • {" "}
+            {/*format(currentVideo.createdAt)*/}
           </Info>
           <Buttons>
             <Button onClick={handleLike}>
@@ -183,7 +203,7 @@ const Video = () => {
               ) : (
                 <ThumbDownOffAltOutlinedIcon />
               )}{" "}
-              Dislike
+              
             </Button>
             <Button>
               <ReplyOutlinedIcon /> Share

@@ -5,6 +5,7 @@ import { storage } from "../firebase";
 //import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { uploadVideo } from "../api/FirestoreAPI";
+import { useSelector } from "react-redux";
 
 const Container = styled.div`
   width: 100%;
@@ -67,6 +68,8 @@ const Label = styled.label`
   font-size: 14px;
 `;
 const Upload = ({ setOpen }) => {
+  const { currentUser } = useSelector((state) => state.user);
+
   const [img, setImg] = useState(undefined);
   const [video, setVideo] = useState(undefined);
   const [imgPerc, setImgPerc] = useState(0);
@@ -132,10 +135,11 @@ const Upload = ({ setOpen }) => {
   const handleUpload = async (e) => {
     e.preventDefault();
     //const res = await axios.post("/videos", { ...inputs, tags });
-    const res = { ...inputs, tags };
+    const res = { ...inputs, tags, currentUser };
     uploadVideo(res);
-    setOpen(false);
-    //res.status===200 && navigate(`/video/${res.data._id}`)
+    //setOpen(false);
+    console.log(res._id);
+    res.status === 200 && navigate(`/video/${res._id}`);
   };
 
   return (
@@ -180,7 +184,9 @@ const Upload = ({ setOpen }) => {
             onChange={(e) => setImg(e.target.files[0])}
           />
         )}
-        <Button type="upload" onClick={handleUpload}>Upload</Button>
+        <Button type="upload" onClick={handleUpload}>
+          Upload
+        </Button>
       </Wrapper>
     </Container>
   );

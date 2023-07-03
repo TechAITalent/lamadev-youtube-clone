@@ -11,6 +11,7 @@ import {
   deleteDoc,
   orderBy,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 
@@ -21,7 +22,10 @@ let commentsRef = collection(firestore, "comments");
 let connectionRef = collection(firestore, "connections");
 
 export const uploadVideo = (object) => {
-  addDoc(videosRef, object)
+  //const newRef = addDoc(videosRef, object)
+  const newRef = doc(videosRef);
+  setDoc(newRef, object);
+  updateDoc(newRef, { _id: newRef.id, createdAt: serverTimestamp() })
     .then(() => {
       toast.success("Post has been added successfully");
     })
@@ -51,18 +55,19 @@ export const getVideo = (setAllStatus) => {
       })
     );
   });
-};
+};*/
 
-export const getSingleStatus = (setAllStatus, id) => {
-  const singlePostQuery = query(postsRef, where("userID", "==", id));
+export const getSingleVideo = (setAllStatus, id) => {
+  const singlePostQuery = query(videosRef, where("_id", "==", id));
   onSnapshot(singlePostQuery, (response) => {
     setAllStatus(
       response.docs.map((docs) => {
-        return { ...docs.data(), id: docs.id };
+        console.log(docs.data());
+        return docs.data();
       })
     );
   });
-};*/
+};
 
 export const getSingleUser = (setCurrentUser, email) => {
   const singleUserQuery = query(userRef, where("email", "==", email));
@@ -70,7 +75,7 @@ export const getSingleUser = (setCurrentUser, email) => {
     setCurrentUser(
       response.docs.map((docs) => {
         return { ...docs.data(), id: docs.id };
-      })[0]
+      })
     );
   });
 };
