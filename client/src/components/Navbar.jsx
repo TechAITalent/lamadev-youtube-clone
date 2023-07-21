@@ -111,8 +111,8 @@ const Navbar = () => {
           {currentUser ? (
             <User>
               <VideoCallOutlinedIcon onClick={() => setOpen(true)} />
-              <Avatar src={currentUser.user.photoURL} />
-              {currentUser.user.displayName}
+              <Avatar src={currentUser.photoURL} />
+              {currentUser.displayName}
               <Button onClick={handleLogout}>LOG OUT</Button>
             </User>
           ) : (

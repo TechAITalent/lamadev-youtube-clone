@@ -125,18 +125,18 @@ const Upload = ({ setOpen }) => {
   };
 
   useEffect(() => {
-    video && uploadFile(video, "videoUrl", "videos/");
+    //video && uploadFile(video, "videoUrl", "videos/");
   }, [video]);
 
   useEffect(() => {
-    img && uploadFile(img, "imgUrl", "images/");
+    //img && uploadFile(img, "imgUrl", "images/");
   }, [img]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
     //const res = await axios.post("/videos", { ...inputs, tags });
-    const res = { ...inputs, tags, currentUser };
-    uploadVideo(res);
+    const res = { ...inputs, tags };
+    uploadVideo(res, currentUser);
     //setOpen(false);
     console.log(res._id);
     res.status === 200 && navigate(`/video/${res._id}`);
@@ -149,7 +149,7 @@ const Upload = ({ setOpen }) => {
         <Title>Upload a New Video</Title>
         <Label>Video:</Label>
         {videoPerc > 0 ? (
-          "Uploading:" + videoPerc
+          "Uploading:" + videoPerc + "%"
         ) : (
           <Input
             type="file"

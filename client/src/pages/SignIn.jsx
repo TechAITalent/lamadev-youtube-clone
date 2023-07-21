@@ -7,7 +7,7 @@ import styled from "styled-components";
 import { loginFailure, loginStart, loginSuccess } from "../redux/userSlice";
 import { auth, provider } from "../firebase";
 import { LoginAPI, GoogleSignInAPI, RegisterAPI } from "../api/AuthAPI";
-import { getSingleUser, postUserData } from "../api/FirestoreAPI";
+import { getSingleUser, loginUserData } from "../api/FirestoreAPI";
 import { async } from "@firebase/util";
 import { useNavigate } from "react-router-dom";
 
@@ -129,12 +129,21 @@ const SignIn = () => {
   };*/
 
   const signInWithGoogle = async () => {
-    dispatch(loginStart());
     try {
-      const data = await GoogleSignInAPI();
-      dispatch(loginSuccess(data));
+      console.log("Hello World");
+      const res = await GoogleSignInAPI();
+      console.log(res);
+      const resData = {
+        displayName: res.user.displayName,
+        email: res.user.email,
+        photoURL: res.user.photoURL,
+        uid: res.user.uid,
+      }
+      console.log(resData);
+      loginUserData(resData);
+      dispatch(loginSuccess(resData));
       navigate("/");
-      console.log(data);
+      
     } catch (err) {
       dispatch(loginFailure());
     }
@@ -147,7 +156,7 @@ const SignIn = () => {
     try {
       const res = await RegisterAPI(email, password);
       res.user.displayName = username;
-      const data = postUserData({
+      const data = loginUserData({
         uid: res.user.uid,
         displayName: res.user.displayName,
         email: res.user.email,

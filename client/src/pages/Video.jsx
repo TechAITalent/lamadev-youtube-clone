@@ -9,13 +9,13 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import Comments from "../components/Comments";
 import Card from "../components/Card";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 //import axios from "axios";
 import { dislike, fetchStart, fetchSuccess, like } from "../redux/videoSlice";
 import { format } from "timeago.js";
 import { subscription } from "../redux/userSlice";
 import Recommendation from "../components/Recommendation";
-import { getSingleVideo } from "../api/FirestoreAPI";
+import { dislikeVideo, getComments, getSingleVideo, likeVideo } from "../api/FirestoreAPI";
 
 const Container = styled.div`
   display: flex;
@@ -136,6 +136,7 @@ const Video = () => {
           `/users/find/${videoRes.data.userId}`
         );*/
         await getSingleVideo(setVideo, path);
+
         //setChannel(channelRes.data);
         //await console.log(dispatch(fetchSuccess(video)));
       } catch (err) {}
@@ -145,67 +146,80 @@ const Video = () => {
 
   useEffect(() => {
     try {
-      if (!null)
-      {
+      if (!null) {
+        console.log(video[0].createdAt);
+        video[0].createdAt = format(video[0].createdAt);
+        console.log(video[0].createdAt);
         dispatch(fetchSuccess(video[0]));
-        console.log(currentVideo.createdAt);
-        const channelRes = currentVideo;
+        const channelRes = currentVideo.uploader;
+        setChannel(channelRes);
         console.log(channelRes);
       }
     } catch (err) {}
   }, [video, setVideo]);
 
   const handleLike = async () => {
-    //await axios.put(`/users/like/${currentVideo._id}`);
-    dispatch(like(currentUser._id));
+    //await axios.put(`/users/like/${currentVideo.id}`);
+    likeVideo(path, currentUser.uid);
+    //dispatch(like(currentUser.id));
+    console.log(currentVideo.likes);
   };
   const handleDislike = async () => {
-    //await axios.put(`/users/dislike/${currentVideo._id}`);
-    dispatch(dislike(currentUser._id));
+    //await axios.put(`/users/dislike/${currentVideo.id}`);
+    dislikeVideo(path, currentUser.uid);
+    //dispatch(dislike(currentUser.id));
+    console.log(currentVideo.dislikes);
   };
 
   const handleSub = async () => {
-    /*currentUser.subscribedUsers.includes(channel._id)
-      ? await axios.put(`/users/unsub/${channel._id}`)
-      : await axios.put(`/users/sub/${channel._id}`);*/
-    dispatch(subscription(channel._id));
+    /*currentUser.subscribedUsers.includes(channel.id)
+      ? await axios.put(`/users/unsub/${channel.id}`)
+      : await axios.put(`/users/sub/${channel.id}`);*/
+    dispatch(subscription(channel.id));
+  };
+
+  const shareVideo = () => {
+    navigator.clipboard.writeText(currentVideo?.videoUrl);
+    console.log("Video shared" + currentVideo?.videoUrl);
   };
 
   //TODO: DELETE VIDEO FUNCTIONALITY
 
   // CurrentVideo Testing
-  console.log(video, currentVideo);
+  console.log(currentUser);
 
   return (
     <Container>
       <Content>
         <VideoWrapper>
-          <VideoFrame src={currentVideo.videoUrl} controls />
+          <VideoFrame src={currentVideo?.videoUrl} controls />
         </VideoWrapper>
-        <Title>{currentVideo.title}</Title>
+        <Title>{currentVideo?.title}</Title>
         <Details>
           <Info>
-            {currentVideo.views} views • {" "}
-            {/*format(currentVideo.createdAt)*/}
+            {currentVideo?.views} views • {currentVideo?.createdAt}
           </Info>
           <Buttons>
             <Button onClick={handleLike}>
-              {currentVideo.likes?.includes(currentUser?._id) ? (
-                <ThumbUpIcon />
-              ) : (
-                <ThumbUpOutlinedIcon />
-              )}{" "}
-              {currentVideo.likes?.length}
+              {currentUser?.likedVideos?.includes(currentVideo?.id) ? (
+                  <ThumbUpIcon />
+                ) : (
+                  <ThumbUpOutlinedIcon />
+                )
+              }{" "}
+              {currentVideo?.likes}
             </Button>
             <Button onClick={handleDislike}>
-              {currentVideo.dislikes?.includes(currentUser?._id) ? (
-                <ThumbDownIcon />
-              ) : (
-                <ThumbDownOffAltOutlinedIcon />
-              )}{" "}
-              
+              {
+                currentVideo?.dislikes?.toString().includes(currentUser?.id) ? (
+                  <ThumbDownIcon />
+                ) : (
+                  <ThumbDownOffAltOutlinedIcon />
+                )
+              }{" "}
+              {currentVideo?.dislikes}
             </Button>
-            <Button>
+            <Button onClick={shareVideo}>
               <ReplyOutlinedIcon /> Share
             </Button>
             <Button>
@@ -216,23 +230,30 @@ const Video = () => {
         <Hr />
         <Channel>
           <ChannelInfo>
-            <Image src={channel.img} />
+            <Link
+              to={`/channel/${channel.uid}`}
+              style={{ textDecoration: "none" }}
+            >
+              <Image src={channel.photoURL} />
+            </Link>
             <ChannelDetail>
-              <ChannelName>{channel.name}</ChannelName>
-              <ChannelCounter>{channel.subscribers} subscribers</ChannelCounter>
-              <Description>{currentVideo.desc}</Description>
+              <ChannelName>{channel.displayName}</ChannelName>
+              <ChannelCounter>
+                {channel.subscribers ? channel.subscribers : 0} subscribers
+              </ChannelCounter>
+              <Description>{currentVideo?.desc}</Description>
             </ChannelDetail>
           </ChannelInfo>
           <Subscribe onClick={handleSub}>
-            {currentUser.subscribedUsers?.includes(channel._id)
+            {currentUser.subscribedUsers?.includes(channel.id)
               ? "SUBSCRIBED"
               : "SUBSCRIBE"}
           </Subscribe>
         </Channel>
         <Hr />
-        <Comments videoId={currentVideo._id} />
+        <Comments videoId={currentVideo?.id} />
       </Content>
-      <Recommendation tags={currentVideo.tags} />
+      <Recommendation tags={currentVideo?.tags} />
     </Container>
   );
 };

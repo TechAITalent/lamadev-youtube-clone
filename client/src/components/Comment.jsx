@@ -37,7 +37,7 @@ const Text = styled.span`
 `;
 
 const Comment = ({ comment }) => {
-  const [channel, setChannel] = useState({});
+  /*const [channel, setChannel] = useState({});
 
   useEffect(() => {
     const fetchComment = async () => {
@@ -45,16 +45,16 @@ const Comment = ({ comment }) => {
       setChannel(res.data)
     };
     fetchComment();
-  }, [comment.userId]);
+  }, [comment.userId]);*/
 
   return (
     <Container>
-      <Avatar src={channel.img} />
+      <Avatar src={comment.photoUrl} />
       <Details>
         <Name>
-          {channel.name} <Date>1 day ago</Date>
+          {comment.username} <Date>{comment.postedAt}</Date>
         </Name>
-        <Text>{comment.desc}</Text>
+        <Text>{comment.comment}</Text>
       </Details>
     </Container>
   );

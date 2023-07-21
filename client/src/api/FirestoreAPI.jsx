@@ -1,6 +1,9 @@
 import { firestore } from "../firebase";
 import {
   addDoc,
+  arrayUnion,
+  arrayRemove,
+  increment,
   collection,
   onSnapshot,
   doc,
@@ -8,6 +11,7 @@ import {
   query,
   where,
   setDoc,
+  getDocs,
   deleteDoc,
   orderBy,
   serverTimestamp,
@@ -16,26 +20,34 @@ import {
 import { toast } from "react-toastify";
 
 let videosRef = collection(firestore, "videos");
-let userRef = collection(firestore, "users");
+let usersRef = collection(firestore, "users");
 let likeRef = collection(firestore, "likes");
 let commentsRef = collection(firestore, "comments");
 let connectionRef = collection(firestore, "connections");
 
-export const uploadVideo = (object) => {
-  //const newRef = addDoc(videosRef, object)
-  const newRef = doc(videosRef);
-  setDoc(newRef, object);
-  updateDoc(newRef, { _id: newRef.id, createdAt: serverTimestamp() })
+export const uploadVideo = (object, uploader) => {
+  //const tempDoc = addDoc(videosRef, object);
+  const tempDoc = doc(videosRef);
+  console.log(tempDoc);
+  /*setDoc(tempDoc, object);
+  updateDoc(tempDoc, {
+    views: 0,
+    likes: 0,
+    dislikes: 0,
+    createdAt: serverTimestamp(),
+    uploader: uploader,
+  })
     .then(() => {
-      toast.success("Post has been added successfully");
+      toast.success("Video has been added successfully");
     })
     .catch((err) => {
       console.log(err);
-    });
+    });*/
 };
 
-export const getVideo = (setAllStatus) => {
-  const q = query(videosRef, orderBy("desc"));
+export const getVideos = (setAllStatus) => {
+  let q = query(videosRef, orderBy("desc"));
+  console.log(q);
   onSnapshot(q, (response) => {
     setAllStatus(
       response.docs.map((docs) => {
@@ -58,19 +70,20 @@ export const getVideo = (setAllStatus) => {
 };*/
 
 export const getSingleVideo = (setAllStatus, id) => {
-  const singlePostQuery = query(videosRef, where("_id", "==", id));
-  onSnapshot(singlePostQuery, (response) => {
+  //const singleVideoQuery = query(videosRef, where("id", "==", id));
+  const q = query(videosRef);
+  onSnapshot(q, (response) => {
     setAllStatus(
       response.docs.map((docs) => {
-        console.log(docs.data());
-        return docs.data();
+        console.log();
+        return { ...docs.data(), id: docs.id };
       })
     );
   });
 };
 
 export const getSingleUser = (setCurrentUser, email) => {
-  const singleUserQuery = query(userRef, where("email", "==", email));
+  const singleUserQuery = query(usersRef, where("email", "==", email));
   onSnapshot(singleUserQuery, (response) => {
     setCurrentUser(
       response.docs.map((docs) => {
@@ -80,9 +93,32 @@ export const getSingleUser = (setCurrentUser, email) => {
   });
 };
 
-export const postUserData = (object) => {
-  addDoc(userRef, object)
-    .then(() => {})
+export const getSingleChannel = (setCurrentUser, uid) => {
+  const singleChannelQuery = query(usersRef, where("uid", "==", uid));
+  onSnapshot(singleChannelQuery, (response) => {
+    setCurrentUser(
+      response.docs.map((docs) => {
+        return { ...docs.data(), id: docs.id };
+      })
+    );
+  });
+};
+
+export const loginUserData = (object) => {
+  /*const singleUserQuery = query(usersRef, where("email", "==", object.email));
+  console.log(singleUserQuery)
+  if (singleUserQuery == object.email) {
+    console.log("Yatta!");
+    toast.success("User has been logged in successfully");
+  } else {
+    console.log("Nani?")
+    const newRef = doc(usersRef);
+    setDoc(newRef, object)*/
+  setDoc(doc(usersRef, object.email), object)
+    .then(() => {
+      console.log("How are you?");
+      toast.success("User has been registered successfully");
+    })
     .catch((err) => {
       console.log(err);
     });
@@ -143,41 +179,85 @@ export const getLikesByUser = (userId, postId, setLiked, setLikesCount) => {
   } catch (err) {
     console.log(err);
   }
+};*/
+
+export const uploadVideoComment = (object) => {
+  updateDoc(doc(videosRef, object.vid), {
+    comments: arrayUnion({
+      comment: object.comment,
+      likes: 0,
+      dislikes: 0,
+      photoUrl: object.photoUrl,
+      postedAt: object.postedAt,
+      username: object.username,
+      uid: object.uid,
+      vid: object.vid,
+    }),
+  });
 };
 
-export const postComment = (postId, comment, timeStamp, name) => {
-  try {
-    addDoc(commentsRef, {
-      postId,
-      comment,
-      timeStamp,
-      name,
-    });
-  } catch (err) {
-    console.log(err);
+export const getVideoComments = async (setComments, vid) => {
+  const docRef = doc(videosRef, vid);
+  const docSnap = await getDoc(docRef);
+  setComments(docSnap.data().comments);
+  console.log(docSnap.data().comments);
+};
+
+export const likeVideo = async (vid, uid) => {
+  // Get userDoc
+  const userQuery = query(usersRef, where("uid", "==", uid));
+  const userSnapDocs = await getDocs(userQuery);
+  let userDoc;
+  userSnapDocs.forEach((doc) => {
+    userDoc = doc;
+  });
+
+  // Add liked video, else remove liked video from list
+  if (userDoc.data().likedVideos?.includes(vid)) {
+    updateDoc(doc(videosRef, vid), { likes: increment(-1) });
+    updateDoc(doc(usersRef, userDoc.id), { likedVideos: arrayRemove(vid) });
+    console.log("Liked video removed");
+  } else {
+    updateDoc(doc(videosRef, vid), { likes: increment(1) });
+    // Remove disliked video if it exists
+    if (userDoc.data().dislikedVideos?.includes(vid)) {
+      updateDoc(doc(videosRef, vid), { dislikes: increment(-1) });
+      updateDoc(doc(usersRef, userDoc.id), { dislikedVideos: arrayRemove(vid) });
+    }
+    updateDoc(doc(usersRef, userDoc.id), { likedVideos: arrayUnion(vid) });
+    console.log("Liked video added");
   }
+  return;
 };
 
-export const getComments = (postId, setComments) => {
-  try {
-    let singlePostQuery = query(commentsRef, where("postId", "==", postId));
+export const dislikeVideo = async (vid, uid) => {
+  // Get userDoc
+  const userQuery = query(usersRef, where("uid", "==", uid));
+  const userSnapDocs = await getDocs(userQuery);
+  let userDoc;
+  userSnapDocs.forEach((doc) => {
+    userDoc = doc;
+  });
 
-    onSnapshot(singlePostQuery, (response) => {
-      const comments = response.docs.map((doc) => {
-        return {
-          id: doc.id,
-          ...doc.data(),
-        };
-      });
-
-      setComments(comments);
-    });
-  } catch (err) {
-    console.log(err);
+  // Add disliked video, else remove disliked video from list
+  if (userDoc.data().dislikedVideos?.includes(vid)) {
+    updateDoc(doc(videosRef, vid), { dislikes: increment(-1) });
+    updateDoc(doc(usersRef, userDoc.id), { dislikedVideos: arrayRemove(vid) });
+    console.log("Disliked video removed");
+  } else {
+    updateDoc(doc(videosRef, vid), { dislikes: increment(1) });
+    // Remove liked video if it exists
+    if (userDoc.data().likedVideos?.includes(vid)) {
+      updateDoc(doc(videosRef, vid), { likes: increment(-1) });
+      updateDoc(doc(usersRef, userDoc.id), { likedVideos: arrayRemove(vid) });
+    }
+    updateDoc(doc(usersRef, userDoc.id), { dislikedVideos: arrayUnion(vid) });
+    console.log("Disliked video added");
   }
+  return;
 };
 
-export const updatePost = (id, status, postImage) => {
+/*export const updatePost = (id, status, postImage) => {
   let docToUpdate = doc(postsRef, id);
   try {
     if (postImage) {

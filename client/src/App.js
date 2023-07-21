@@ -6,6 +6,7 @@ import { darkTheme, lightTheme } from "./utils/Theme";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Video from "./pages/Video";
+import Channel from "./pages/Channel";
 import SignIn from "./pages/SignIn";
 import Search from "./pages/Search";
 import { useSelector } from "react-redux";
@@ -46,6 +47,9 @@ function App() {
                   />
                   <Route path="video">
                     <Route path=":id" element={<Video />} />
+                  </Route>
+                  <Route path="channel">
+                    <Route path=":uid" element={<Channel />} />
                   </Route>
                 </Route>
               </Routes>
