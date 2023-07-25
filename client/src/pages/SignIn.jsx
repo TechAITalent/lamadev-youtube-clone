@@ -137,10 +137,10 @@ const SignIn = () => {
         displayName: res.user.displayName,
         email: res.user.email,
         photoURL: res.user.photoURL,
-        uid: res.user.uid,
       }
       console.log(resData);
-      loginUserData(resData);
+      loginUserData(resData, res.user.uid);
+      resData.uid = res.user.uid;
       dispatch(loginSuccess(resData));
       navigate("/");
       

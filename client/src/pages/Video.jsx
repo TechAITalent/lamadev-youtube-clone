@@ -15,7 +15,14 @@ import { dislike, fetchStart, fetchSuccess, like } from "../redux/videoSlice";
 import { format } from "timeago.js";
 import { subscription } from "../redux/userSlice";
 import Recommendation from "../components/Recommendation";
-import { dislikeVideo, getComments, getSingleVideo, likeVideo } from "../api/FirestoreAPI";
+import {
+  dislikeVideo,
+  getComments,
+  getSingleVideo,
+  getSingleUser,
+  likeVideo,
+  subscribeChannel,
+} from "../api/FirestoreAPI";
 
 const Container = styled.div`
   display: flex;
@@ -101,7 +108,7 @@ const Description = styled.p`
 `;
 
 const Subscribe = styled.button`
-  background-color: #cc1a00;
+  
   font-weight: 500;
   color: white;
   border: none;
@@ -109,6 +116,7 @@ const Subscribe = styled.button`
   height: max-content;
   padding: 10px 20px;
   cursor: pointer;
+  background-color: ${ props => props.subscribed ? `#444fff` : `#cc1a00` };
 `;
 
 const VideoFrame = styled.video`
@@ -125,20 +133,15 @@ const Video = () => {
   const path = useLocation().pathname.split("/")[2];
 
   const [channel, setChannel] = useState({});
+  const [currentViewer, setCurrentViewer] = useState({});
   const [video, setVideo] = useState();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         fetchStart();
-        /*const videoRes = await axios.get(`/videos/find/${path}`);
-        const channelRes = await axios.get(
-          `/users/find/${videoRes.data.userId}`
-        );*/
         await getSingleVideo(setVideo, path);
-
-        //setChannel(channelRes.data);
-        //await console.log(dispatch(fetchSuccess(video)));
+        await getSingleUser(setCurrentViewer, currentUser.id);
       } catch (err) {}
     };
     fetchData();
@@ -159,23 +162,16 @@ const Video = () => {
   }, [video, setVideo]);
 
   const handleLike = async () => {
-    //await axios.put(`/users/like/${currentVideo.id}`);
-    likeVideo(path, currentUser.uid);
-    //dispatch(like(currentUser.id));
+    likeVideo(path, currentUser.id);
     console.log(currentVideo.likes);
   };
   const handleDislike = async () => {
-    //await axios.put(`/users/dislike/${currentVideo.id}`);
-    dislikeVideo(path, currentUser.uid);
-    //dispatch(dislike(currentUser.id));
+    dislikeVideo(path, currentUser.id);
     console.log(currentVideo.dislikes);
   };
 
   const handleSub = async () => {
-    /*currentUser.subscribedUsers.includes(channel.id)
-      ? await axios.put(`/users/unsub/${channel.id}`)
-      : await axios.put(`/users/sub/${channel.id}`);*/
-    dispatch(subscription(channel.id));
+    subscribeChannel(currentVideo.uploader.uid, currentUser.id);
   };
 
   const shareVideo = () => {
@@ -186,7 +182,7 @@ const Video = () => {
   //TODO: DELETE VIDEO FUNCTIONALITY
 
   // CurrentVideo Testing
-  console.log(currentUser);
+  console.log(currentUser, currentViewer);
 
   return (
     <Container>
@@ -202,21 +198,18 @@ const Video = () => {
           <Buttons>
             <Button onClick={handleLike}>
               {currentUser?.likedVideos?.includes(currentVideo?.id) ? (
-                  <ThumbUpIcon />
-                ) : (
-                  <ThumbUpOutlinedIcon />
-                )
-              }{" "}
+                <ThumbUpIcon />
+              ) : (
+                <ThumbUpOutlinedIcon />
+              )}{" "}
               {currentVideo?.likes}
             </Button>
             <Button onClick={handleDislike}>
-              {
-                currentVideo?.dislikes?.toString().includes(currentUser?.id) ? (
-                  <ThumbDownIcon />
-                ) : (
-                  <ThumbDownOffAltOutlinedIcon />
-                )
-              }{" "}
+              {currentVideo?.dislikes?.toString().includes(currentUser?.id) ? (
+                <ThumbDownIcon />
+              ) : (
+                <ThumbDownOffAltOutlinedIcon />
+              )}{" "}
               {currentVideo?.dislikes}
             </Button>
             <Button onClick={shareVideo}>
@@ -239,13 +232,24 @@ const Video = () => {
             <ChannelDetail>
               <ChannelName>{channel.displayName}</ChannelName>
               <ChannelCounter>
-                {channel.subscribers ? channel.subscribers : 0} subscribers
+                {currentVideo?.uploader?.subscribers ? currentVideo?.uploader?.subscribers : 0} subscribers
               </ChannelCounter>
               <Description>{currentVideo?.desc}</Description>
             </ChannelDetail>
           </ChannelInfo>
-          <Subscribe onClick={handleSub}>
-            {currentUser.subscribedUsers?.includes(channel.id)
+          <Subscribe
+            onClick={handleSub}
+            subscribed={
+              currentViewer?.subscribedChannels?.includes(
+                currentVideo.uploader.uid
+              )
+                ? true
+                : false
+            }
+          >
+            {currentViewer?.subscribedChannels?.includes(
+              currentVideo.uploader.uid
+            )
               ? "SUBSCRIBED"
               : "SUBSCRIBE"}
           </Subscribe>

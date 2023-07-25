@@ -39,6 +39,7 @@ const Comments = ({ videoId }) => {
   //TODO: ADD NEW COMMENT FUNCTIONALITY
   const addComment = async (e) => {
     if (e.key === "Enter" && newComment !== "") {
+      console.log("Step 0");
       try {
         let currentTime = Date().toLocaleString();
         const res = {
@@ -46,9 +47,10 @@ const Comments = ({ videoId }) => {
           photoUrl: currentUser.photoURL,
           postedAt: currentTime,
           username: currentUser.displayName,
-          uid: currentUser.uid,
+          uid: currentUser.id,
           vid: videoId,
         };
+        console.log(res);
         uploadVideoComment(res);
       } catch (err) {}
     }
