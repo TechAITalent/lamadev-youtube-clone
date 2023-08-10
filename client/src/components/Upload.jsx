@@ -6,6 +6,7 @@ import { storage } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { uploadVideo } from "../api/FirestoreAPI";
 import { useSelector } from "react-redux";
+import { generateVideoThumbnails } from "../api/MediaAPI";
 
 const Container = styled.div`
   width: 100%;
@@ -67,11 +68,13 @@ const Button = styled.button`
 const Label = styled.label`
   font-size: 14px;
 `;
+
 const Upload = ({ setOpen }) => {
   const { currentUser } = useSelector((state) => state.user);
 
   const [img, setImg] = useState(undefined);
   const [video, setVideo] = useState(undefined);
+  const [thumbnails, setThumbnails] = useState([]);
   const [imgPerc, setImgPerc] = useState(0);
   const [videoPerc, setVideoPerc] = useState(0);
   const [inputs, setInputs] = useState({});
@@ -89,7 +92,20 @@ const Upload = ({ setOpen }) => {
     setTags(e.target.value.split(","));
   };
 
-  const uploadFile = (file, urlType, subfolder) => {
+  const uploadVideo = async (file) => {
+    console.log(thumbnails);
+    const t = await generateVideoThumbnails(file, 2);
+    /*const tempImg = ({}) => <img await="true" src={t} />;
+    setThumbnails(tempImg);
+    console.log(thumbnails);*/
+    t.forEach( async (res) =>{
+      const tempImg = ({}) => <img await="true" src={res} />;
+      setThumbnails(tempImg);
+    });
+    console.log(thumbnails);
+  };
+
+  const uploadPayload = async (file, urlType, subfolder) => {
     const fileName = new Date().getTime() + file.name;
     const storageRef = ref(storage, subfolder + fileName);
     const uploadTask = uploadBytesResumable(storageRef, file);
@@ -102,6 +118,7 @@ const Upload = ({ setOpen }) => {
         urlType === "imgUrl"
           ? setImgPerc(Math.round(progress))
           : setVideoPerc(Math.round(progress));
+        setVideoPerc(Math.round(progress));
         switch (snapshot.state) {
           case "paused":
             console.log("Upload is paused");
@@ -125,11 +142,12 @@ const Upload = ({ setOpen }) => {
   };
 
   useEffect(() => {
-    //video && uploadFile(video, "videoUrl", "videos/");
+    video && uploadVideo(video);
+    // "videoUrl", "videos/"
   }, [video]);
 
   useEffect(() => {
-    //img && uploadFile(img, "imgUrl", "images/");
+    //img && uploadImage(img, "imgUrl", "images/");
   }, [img]);
 
   const handleUpload = async (e) => {
@@ -174,6 +192,7 @@ const Upload = ({ setOpen }) => {
           placeholder="Separate the tags with commas."
           onChange={handleTags}
         />
+        {/*
         <Label>Image:</Label>
         {imgPerc > 0 ? (
           "Uploading:" + imgPerc + "%"
@@ -183,7 +202,8 @@ const Upload = ({ setOpen }) => {
             accept="image/*"
             onChange={(e) => setImg(e.target.files[0])}
           />
-        )}
+        )}*/}
+        {thumbnails}
         <Button type="upload" onClick={handleUpload}>
           Upload
         </Button>
